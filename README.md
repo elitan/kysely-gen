@@ -1,18 +1,22 @@
 # kysely-typegen
 
-Modern Kysely type generator built with Bun and TDD principles.
+Modern PostgreSQL type generator for Kysely, built with Bun and TDD principles.
+
+A modern alternative to [kysely-codegen](https://github.com/RobinBlomberg/kysely-codegen), focused exclusively on PostgreSQL with a simpler, faster implementation.
 
 ## Features
 
-- ✅ **Solid foundations** - AST-based code generation
+- ✅ **PostgreSQL-focused** - Built specifically for PostgreSQL, no multi-database complexity
+- ✅ **Solid foundations** - AST-based code generation ensures valid TypeScript
 - ✅ **Type-safe** - Full TypeScript types throughout
-- ✅ **Well-tested** - 64 tests with TDD approach
-- ✅ **Fast** - Built with Bun
+- ✅ **Well-tested** - 109 passing tests with TDD approach
+- ✅ **Fast** - Built with Bun for excellent performance
 - ✅ **ColumnType support** - Proper types for select/insert/update operations
 - ✅ **CamelCase plugin** - Optional camelCase conversion
 - ✅ **PostgreSQL enums** - Properly maps enum columns to enum types
 - ✅ **Table filtering** - Include/exclude tables with glob patterns
-- ✅ **PostgreSQL support** - More dialects coming soon
+- ✅ **Materialized views** - Full support for PostgreSQL materialized views
+- ✅ **Domains & partitions** - Handles PostgreSQL domain types and partitioned tables
 
 ## Installation
 
@@ -182,11 +186,13 @@ test/
 
 ### Key Features
 
+- **PostgreSQL-Only** - No multi-database complexity, focused on doing PostgreSQL right
 - **@/ Path Alias** - Clean imports without relative path hell
 - **Professional CLI** - Built with commander, chalk, and ora
-- **Test-Driven** - 64 tests, all passing
+- **Test-Driven** - 109 tests, all passing (100% parity with kysely-codegen core features)
 - **Type-Safe** - Full TypeScript throughout
 - **ColumnType Support** - Proper types for select/insert/update differences
 - **CamelCase Plugin** - Optional camelCase conversion
 - **Enum Support** - PostgreSQL enums map to TypeScript types
 - **Table Filtering** - Powerful glob-based filtering with micromatch
+- **Advanced PostgreSQL** - Materialized views, domain types, partitions, array columns

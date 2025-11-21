@@ -1,8 +1,39 @@
 {
   "name": "kysely-typegen",
   "version": "0.1.0",
-  "description": "Modern Kysely type generator built with Bun",
+  "description": "Modern PostgreSQL type generator for Kysely - Built with Bun and TDD",
   "type": "module",
+  "license": "MIT",
+  "author": "kysely-typegen contributors",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/elitan/kysely-typegen.git"
+  },
+  "bugs": {
+    "url": "https://github.com/elitan/kysely-typegen/issues"
+  },
+  "homepage": "https://github.com/elitan/kysely-typegen#readme",
+  "keywords": [
+    "kysely",
+    "postgres",
+    "postgresql",
+    "typescript",
+    "codegen",
+    "typegen",
+    "type-generator",
+    "database",
+    "sql"
+  ],
+  "engines": {
+    "node": ">=20.0.0",
+    "bun": ">=1.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "package.json"
+  ],
   "bin": {
     "kysely-typegen": "./dist/cli.js"
   },
@@ -14,7 +45,8 @@
     "dev": "bun run src/cli.ts",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
-    "db:logs": "docker compose logs -f postgres"
+    "db:logs": "docker compose logs -f postgres",
+    "prepublishOnly": "bun run build && bun test"
   },
   "dependencies": {
     "chalk": "^5.6.2",
