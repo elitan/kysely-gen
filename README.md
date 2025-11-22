@@ -160,6 +160,42 @@ Database → Metadata → AST → TypeScript
 - **Transform** - Convert metadata to type-safe AST nodes
 - **Serialize** - Generate clean TypeScript code
 
+### Publishing
+
+This section is for maintainers who publish new versions to npm.
+
+**One-time setup:**
+
+1. Create npm account and join the package (if not already)
+2. Generate automation token at [npmjs.com](https://www.npmjs.com/settings/~/tokens)
+   - Click "Generate New Token" → "Automation"
+   - Copy the token
+3. Add token to GitHub repository:
+   - Go to repo Settings → Secrets and variables → Actions
+   - Click "New repository secret"
+   - Name: `NPM_TOKEN`
+   - Value: paste your token
+   - Click "Add secret"
+
+**Publishing a new version:**
+
+1. Go to GitHub repository → Actions tab
+2. Click "Publish to npm" workflow (left sidebar)
+3. Click "Run workflow" button (right side)
+4. Enter version number (e.g., `0.0.1`, `0.1.0`, `1.0.0`)
+5. Click green "Run workflow" button
+
+The workflow will automatically:
+- Run all 109 tests
+- Build the package
+- Update package.json version
+- Commit and push changes
+- Create git tag
+- Publish to npm with provenance
+- Create GitHub Release with auto-generated notes
+
+**View releases:** Check the [Releases page](https://github.com/elitan/kysely-typegen/releases) to see all published versions and changelogs.
+
 ## Project Structure
 
 ```

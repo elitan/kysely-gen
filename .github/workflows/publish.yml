@@ -1,0 +1,107 @@
+name: Publish to npm
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 0.0.1, 0.1.0, 1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Initialize database
+        run: |
+          bun add pg
+          PGPASSWORD=test_password psql -h localhost -p 5433 -U test_user -d test_db -f test/fixtures/init.sql
+
+      - name: Run tests
+        run: bun test
+        env:
+          DATABASE_URL: postgres://test_user:test_password@localhost:5433/test_db
+
+      - name: Build package
+        run: bun run build
+
+      - name: Dry-run publish check
+        run: npm pack --dry-run
+
+      - name: Update package.json version
+        run: npm version ${{ github.event.inputs.version }} --no-git-tag-version
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit version bump
+        run: |
+          git add package.json
+          git commit -m "chore: Release v${{ github.event.inputs.version }}"
+
+      - name: Create tag
+        run: git tag v${{ github.event.inputs.version }}
+
+      - name: Push changes
+        run: |
+          git push origin main
+          git push origin v${{ github.event.inputs.version }}
+
+      - name: Publish to npm
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: release } = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: 'v${{ github.event.inputs.version }}',
+              name: 'v${{ github.event.inputs.version }}',
+              generate_release_notes: true
+            });
+            console.log('Created release:', release.html_url);

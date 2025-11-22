@@ -37,6 +37,10 @@
   "bin": {
     "kysely-typegen": "./dist/cli.js"
   },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "build": "bun build ./src/cli.ts --outdir ./dist --target node",
     "test": "bun test",
@@ -45,8 +49,7 @@
     "dev": "bun run src/cli.ts",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
-    "db:logs": "docker compose logs -f postgres",
-    "prepublishOnly": "bun run build && bun test"
+    "db:logs": "docker compose logs -f postgres"
   },
   "dependencies": {
     "chalk": "^5.6.2",
