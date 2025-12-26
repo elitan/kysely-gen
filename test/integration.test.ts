@@ -24,7 +24,7 @@ describe('Integration: Full pipeline', () => {
     const metadata = await introspectDatabase(db, { schemas: ['public'] });
 
     // Transform
-    const program = transformDatabase(metadata);
+    const { program } = transformDatabase(metadata);
 
     // Serialize
     const output = serialize(program);
@@ -63,7 +63,7 @@ describe('Integration: Full pipeline', () => {
     expect(metadata.tables).toHaveLength(0);
     expect(metadata.enums).toHaveLength(0);
 
-    const program = transformDatabase(metadata);
+    const { program } = transformDatabase(metadata);
     const output = serialize(program);
 
     // Should still have imports and DB interface

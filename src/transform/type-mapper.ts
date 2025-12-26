@@ -22,10 +22,15 @@ function createColumnType(
   };
 }
 
-export function mapPostgresType(pgType: string, isNullable: boolean, isArray?: boolean): TypeNode {
+export function mapPostgresType(
+  pgType: string,
+  isNullable: boolean,
+  isArray?: boolean,
+  unknownTypes?: Set<string>
+): TypeNode {
   if (isArray || pgType.endsWith('[]')) {
     const baseTypeName = pgType.endsWith('[]') ? pgType.slice(0, -2) : pgType;
-    const elementType = mapPostgresType(baseTypeName, false, false);
+    const elementType = mapPostgresType(baseTypeName, false, false, unknownTypes);
     const arrayType: TypeNode = {
       kind: 'array',
       elementType,
@@ -152,6 +157,9 @@ export function mapPostgresType(pgType: string, isNullable: boolean, isArray?: b
       break;
 
     default:
+      if (unknownTypes) {
+        unknownTypes.add(pgType);
+      }
       baseType = { kind: 'primitive', value: 'unknown' };
   }
 

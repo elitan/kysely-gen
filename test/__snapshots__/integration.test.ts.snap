@@ -67,6 +67,12 @@ export interface UserStat {
   comment_count: ColumnType<string, string | number | bigint, string | number | bigint> | null;
 }
 
+export interface UserTagsView {
+  id: number | null;
+  username: string | null;
+  tags: string[] | null;
+}
+
 export interface DB {
   comments: Comment;
   measurements: Measurement;
@@ -75,6 +81,7 @@ export interface DB {
   posts: Post;
   users: User;
   user_stats: UserStat;
+  user_tags_view: UserTagsView;
 }
 "
 `;

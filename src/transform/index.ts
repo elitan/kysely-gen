@@ -1,15 +1,16 @@
-import type { InterfaceNode, ProgramNode, TypeAliasNode } from '@/ast/nodes';
+import type { InterfaceNode, TypeAliasNode } from '@/ast/nodes';
 import type { DatabaseMetadata } from '@/introspect/types';
-import type { TransformOptions } from '@/transform/types';
+import type { TransformOptions, TransformResult, TransformWarning } from '@/transform/types';
 import { filterTables } from '@/transform/filter';
 import { transformEnum } from '@/transform/enum';
 import { transformTable, createDBInterface } from '@/transform/table';
 
 export { mapPostgresType } from '@/transform/type-mapper';
-export type { TransformOptions } from '@/transform/types';
+export type { TransformOptions, TransformResult, TransformWarning } from '@/transform/types';
 
-export function transformDatabase(metadata: DatabaseMetadata, options?: TransformOptions): ProgramNode {
+export function transformDatabase(metadata: DatabaseMetadata, options?: TransformOptions): TransformResult {
   const declarations: (InterfaceNode | TypeAliasNode)[] = [];
+  const unknownTypes = new Set<string>();
 
   declarations.push({
     kind: 'import',
@@ -38,11 +39,16 @@ export function transformDatabase(metadata: DatabaseMetadata, options?: Transfor
 
   const tableInterfaces: InterfaceNode[] = [];
   for (const table of filteredTables) {
-    tableInterfaces.push(transformTable(table, metadata.enums, options));
+    tableInterfaces.push(transformTable(table, metadata.enums, options, unknownTypes));
   }
   declarations.push(...tableInterfaces);
 
   declarations.push(createDBInterface(filteredTables, options));
 
-  return { declarations };
+  const warnings: TransformWarning[] = Array.from(unknownTypes).map((pgType) => ({
+    type: 'unknown_type',
+    pgType,
+  }));
+
+  return { program: { declarations }, warnings };
 }

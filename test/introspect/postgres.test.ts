@@ -196,4 +196,17 @@ describe('PostgreSQL Introspector', () => {
     expect(partition2).toBeDefined();
     expect(partition2?.isPartition).toBe(true);
   });
+
+  test('should detect array columns in materialized views', async () => {
+    const metadata = await introspectDatabase(db, { schemas: ['public'] });
+
+    const userTagsView = metadata.tables.find((t) => t.name === 'user_tags_view');
+    expect(userTagsView).toBeDefined();
+    expect(userTagsView?.isView).toBe(true);
+
+    const tagsColumn = userTagsView?.columns.find((c) => c.name === 'tags');
+    expect(tagsColumn).toBeDefined();
+    expect(tagsColumn?.isArray).toBe(true);
+    expect(tagsColumn?.dataType).toBe('text');
+  });
 });
