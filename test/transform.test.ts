@@ -87,7 +87,7 @@ describe('Transform', () => {
         enums: [],
       };
 
-      const program = transformDatabase(metadata);
+      const { program } = transformDatabase(metadata);
 
       // Should have import, Generated type, and 2 interfaces (User + DB)
       expect(program.declarations).toHaveLength(4);
@@ -146,7 +146,7 @@ describe('Transform', () => {
         ],
       };
 
-      const program = transformDatabase(metadata);
+      const { program } = transformDatabase(metadata);
 
       const statusType = program.declarations.find(
         (d) => d.kind === 'typeAlias' && d.name === 'StatusEnum'
@@ -183,7 +183,7 @@ describe('Transform', () => {
         enums: [],
       };
 
-      const program = transformDatabase(metadata);
+      const { program } = transformDatabase(metadata);
 
       const postInterface = program.declarations.find(
         (d) => d.kind === 'interface' && d.name === 'Post'
@@ -230,7 +230,7 @@ describe('Transform', () => {
         ],
       };
 
-      const program = transformDatabase(metadata);
+      const { program } = transformDatabase(metadata);
 
       const commentInterface = program.declarations.find(
         (d) => d.kind === 'interface' && d.name === 'Comment'
@@ -270,7 +270,7 @@ describe('Transform', () => {
         ],
       };
 
-      const program = transformDatabase(metadata);
+      const { program } = transformDatabase(metadata);
 
       const commentInterface = program.declarations.find(
         (d) => d.kind === 'interface' && d.name === 'Comment'
@@ -324,7 +324,7 @@ describe('Transform', () => {
     };
 
     test('should include only matching tables with include pattern', () => {
-      const program = transformDatabase(testMetadata, {
+      const { program } = transformDatabase(testMetadata, {
         includePattern: ['public.user*'],
       });
 
@@ -334,7 +334,7 @@ describe('Transform', () => {
     });
 
     test('should exclude matching tables with exclude pattern', () => {
-      const program = transformDatabase(testMetadata, {
+      const { program } = transformDatabase(testMetadata, {
         excludePattern: ['*internal*'],
       });
 
@@ -349,7 +349,7 @@ describe('Transform', () => {
     });
 
     test('should handle multiple include patterns', () => {
-      const program = transformDatabase(testMetadata, {
+      const { program } = transformDatabase(testMetadata, {
         includePattern: ['public.users', 'auth.*'],
       });
 
@@ -362,7 +362,7 @@ describe('Transform', () => {
     });
 
     test('should combine include and exclude patterns', () => {
-      const program = transformDatabase(testMetadata, {
+      const { program } = transformDatabase(testMetadata, {
         includePattern: ['public.*'],
         excludePattern: ['*internal*'],
       });
@@ -377,7 +377,7 @@ describe('Transform', () => {
     });
 
     test('should update DB interface with filtered tables only', () => {
-      const program = transformDatabase(testMetadata, {
+      const { program } = transformDatabase(testMetadata, {
         includePattern: ['public.users'],
       });
 
@@ -491,7 +491,7 @@ describe('Transform', () => {
         enums: [],
       };
 
-      const program = transformDatabase(metadata);
+      const { program } = transformDatabase(metadata);
 
       const productInterface = program.declarations.find(
         (d) => d.kind === 'interface' && d.name === 'Product'
@@ -652,7 +652,7 @@ describe('Transform', () => {
         enums: [],
       };
 
-      const program = transformDatabase(metadata);
+      const { program } = transformDatabase(metadata);
 
       const complexInterface = program.declarations.find(
         (d) => d.kind === 'interface' && d.name === 'ComplexType'
@@ -696,7 +696,7 @@ describe('Transform', () => {
         enums: [],
       };
 
-      const program = transformDatabase(metadata);
+      const { program } = transformDatabase(metadata);
 
       const simpleInterface = program.declarations.find(
         (d) => d.kind === 'interface' && d.name === 'Simple'
@@ -715,7 +715,7 @@ describe('Transform', () => {
         enums: [],
       };
 
-      const program = transformDatabase(metadata);
+      const { program } = transformDatabase(metadata);
 
       const dbInterface = program.declarations.find(
         (d) => d.kind === 'interface' && d.name === 'DB'
@@ -761,7 +761,7 @@ describe('Transform', () => {
         enums: [],
       };
 
-      const program = transformDatabase(metadata);
+      const { program } = transformDatabase(metadata);
 
       const typeInterface = program.declarations.find(
         (d) => d.kind === 'interface' && d.name === 'Type'
@@ -804,7 +804,7 @@ describe('Transform', () => {
         enums: [],
       };
 
-      const program = transformDatabase(metadata);
+      const { program } = transformDatabase(metadata);
 
       const specialInterface = program.declarations.find(
         (d) => d.kind === 'interface' && d.name === 'Special'
@@ -838,7 +838,7 @@ describe('Transform', () => {
         enums: [],
       };
 
-      const program = transformDatabase(metadata);
+      const { program } = transformDatabase(metadata);
 
       const tableInterface = program.declarations.find(
         (d) => d.kind === 'interface' && d.name === 'Table123'
@@ -881,7 +881,7 @@ describe('Transform', () => {
         enums: [],
       };
 
-      const program = transformDatabase(metadata);
+      const { program } = transformDatabase(metadata);
 
       const nullableInterface = program.declarations.find(
         (d) => d.kind === 'interface' && d.name === 'NullableTable'
@@ -908,7 +908,7 @@ describe('Transform', () => {
         ],
       };
 
-      const program = transformDatabase(metadata);
+      const { program } = transformDatabase(metadata);
 
       const singleEnum = program.declarations.find(
         (d) => d.kind === 'typeAlias' && d.name === 'SingleEnum'
@@ -944,7 +944,7 @@ describe('Transform', () => {
         enums: [],
       };
 
-      const program = transformDatabase(metadata);
+      const { program } = transformDatabase(metadata);
 
       const longInterface = program.declarations.find(
         (d) => d.kind === 'interface' && d.name === 'VeryLongTableNameThatGoesOnAndOnAndOn'
@@ -980,7 +980,7 @@ describe('Transform', () => {
         enums: [],
       };
 
-      const program = transformDatabase(metadata);
+      const { program } = transformDatabase(metadata);
 
       const defaultInterface = program.declarations.find(
         (d) => d.kind === 'interface' && d.name === 'Default'
@@ -997,6 +997,201 @@ describe('Transform', () => {
           expect(createdProp.type.name).toBe('ColumnType');
         }
       }
+    });
+  });
+
+  describe('schema-qualified enums', () => {
+    test('should prefix enum type names with schema for non-public schemas', () => {
+      const metadata: DatabaseMetadata = {
+        tables: [],
+        enums: [
+          {
+            schema: 'public',
+            name: 'status_enum',
+            values: ['pending', 'approved'],
+          },
+          {
+            schema: 'auth',
+            name: 'role_enum',
+            values: ['admin', 'user'],
+          },
+        ],
+      };
+
+      const { program } = transformDatabase(metadata);
+
+      const publicEnum = program.declarations.find(
+        (d) => d.kind === 'typeAlias' && d.name === 'StatusEnum'
+      );
+      expect(publicEnum).toBeDefined();
+
+      const authEnum = program.declarations.find(
+        (d) => d.kind === 'typeAlias' && d.name === 'AuthRoleEnum'
+      );
+      expect(authEnum).toBeDefined();
+    });
+
+    test('should correctly reference schema-qualified enum in column type', () => {
+      const metadata: DatabaseMetadata = {
+        tables: [
+          {
+            schema: 'auth',
+            name: 'users',
+            columns: [
+              {
+                name: 'id',
+                dataType: 'int4',
+                isNullable: false,
+                isAutoIncrement: true,
+                hasDefaultValue: true,
+              },
+              {
+                name: 'role',
+                dataType: 'role_enum',
+                dataTypeSchema: 'auth',
+                isNullable: false,
+                isAutoIncrement: false,
+                hasDefaultValue: false,
+              },
+            ],
+          },
+        ],
+        enums: [
+          {
+            schema: 'auth',
+            name: 'role_enum',
+            values: ['admin', 'user'],
+          },
+        ],
+      };
+
+      const { program } = transformDatabase(metadata);
+
+      const userInterface = program.declarations.find(
+        (d) => d.kind === 'interface' && d.name === 'User'
+      );
+      expect(userInterface).toBeDefined();
+      if (userInterface?.kind === 'interface') {
+        const roleProp = userInterface.properties.find((p) => p.name === 'role');
+        expect(roleProp?.type).toEqual({ kind: 'reference', name: 'AuthRoleEnum' });
+      }
+    });
+  });
+
+  describe('unknown type warnings', () => {
+    test('should return warnings for unknown postgres types', () => {
+      const metadata: DatabaseMetadata = {
+        tables: [
+          {
+            schema: 'public',
+            name: 'test',
+            columns: [
+              {
+                name: 'id',
+                dataType: 'int4',
+                isNullable: false,
+                isAutoIncrement: true,
+                hasDefaultValue: true,
+              },
+              {
+                name: 'geo',
+                dataType: 'geometry',
+                isNullable: false,
+                isAutoIncrement: false,
+                hasDefaultValue: false,
+              },
+              {
+                name: 'network',
+                dataType: 'inet',
+                isNullable: false,
+                isAutoIncrement: false,
+                hasDefaultValue: false,
+              },
+            ],
+          },
+        ],
+        enums: [],
+      };
+
+      const result = transformDatabase(metadata);
+
+      expect(result.warnings).toBeDefined();
+      expect(result.warnings.length).toBeGreaterThan(0);
+
+      const unknownTypes = result.warnings.map((w) => w.pgType);
+      expect(unknownTypes).toContain('geometry');
+      expect(unknownTypes).toContain('inet');
+    });
+
+    test('should dedupe warnings by type', () => {
+      const metadata: DatabaseMetadata = {
+        tables: [
+          {
+            schema: 'public',
+            name: 'test1',
+            columns: [
+              {
+                name: 'geo1',
+                dataType: 'geometry',
+                isNullable: false,
+                isAutoIncrement: false,
+                hasDefaultValue: false,
+              },
+            ],
+          },
+          {
+            schema: 'public',
+            name: 'test2',
+            columns: [
+              {
+                name: 'geo2',
+                dataType: 'geometry',
+                isNullable: false,
+                isAutoIncrement: false,
+                hasDefaultValue: false,
+              },
+            ],
+          },
+        ],
+        enums: [],
+      };
+
+      const result = transformDatabase(metadata);
+
+      const geometryWarnings = result.warnings.filter((w) => w.pgType === 'geometry');
+      expect(geometryWarnings).toHaveLength(1);
+    });
+
+    test('should return empty warnings for known types', () => {
+      const metadata: DatabaseMetadata = {
+        tables: [
+          {
+            schema: 'public',
+            name: 'test',
+            columns: [
+              {
+                name: 'id',
+                dataType: 'int4',
+                isNullable: false,
+                isAutoIncrement: true,
+                hasDefaultValue: true,
+              },
+              {
+                name: 'name',
+                dataType: 'varchar',
+                isNullable: false,
+                isAutoIncrement: false,
+                hasDefaultValue: false,
+              },
+            ],
+          },
+        ],
+        enums: [],
+      };
+
+      const result = transformDatabase(metadata);
+
+      expect(result.warnings).toHaveLength(0);
     });
   });
 });

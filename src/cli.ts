@@ -107,7 +107,7 @@ async function generate(options: {
 
   // Transform and generate
   spinner.start('Generating TypeScript types...');
-  const program = transformDatabase(metadata, {
+  const { program, warnings } = transformDatabase(metadata, {
     camelCase: options.camelCase,
     includePattern: options.includePattern.length > 0 ? options.includePattern : undefined,
     excludePattern: options.excludePattern.length > 0 ? options.excludePattern : undefined,
@@ -119,11 +119,20 @@ async function generate(options: {
   await writeFile(absolutePath, code, 'utf-8');
   spinner.succeed(`Types written to ${chalk.cyan(absolutePath)}`);
 
+  // Show warnings
+  if (warnings.length > 0) {
+    console.log('');
+    console.log(chalk.yellow('Warnings:'));
+    for (const w of warnings) {
+      console.log(chalk.dim(`  Unknown type '${w.pgType}' mapped to 'unknown'`));
+    }
+  }
+
   // Clean up
   await db.destroy();
 
   console.log('');
-  console.log(chalk.green('✓ Done!'));
+  console.log(chalk.green('Done!'));
   console.log('');
 }
 

@@ -66,7 +66,7 @@ describe('CamelCase Support', () => {
     };
 
     test('should convert column names to camelCase', () => {
-      const program = transformDatabase(metadata, { camelCase: true });
+      const { program } = transformDatabase(metadata, { camelCase: true });
       const code = serialize(program);
 
       expect(code).toContain('userId: Generated<number>');
@@ -76,21 +76,21 @@ describe('CamelCase Support', () => {
     });
 
     test('should convert table names in DB interface to camelCase', () => {
-      const program = transformDatabase(metadata, { camelCase: true });
+      const { program } = transformDatabase(metadata, { camelCase: true });
       const code = serialize(program);
 
       expect(code).toContain('userProfiles: UserProfile');
     });
 
     test('should keep interface names as PascalCase', () => {
-      const program = transformDatabase(metadata, { camelCase: true });
+      const { program } = transformDatabase(metadata, { camelCase: true });
       const code = serialize(program);
 
       expect(code).toContain('export interface UserProfile {');
     });
 
     test('should not convert names when camelCase is false', () => {
-      const program = transformDatabase(metadata, { camelCase: false });
+      const { program } = transformDatabase(metadata, { camelCase: false });
       const code = serialize(program);
 
       expect(code).toContain('user_id: Generated<number>');
@@ -99,7 +99,7 @@ describe('CamelCase Support', () => {
     });
 
     test('should not convert names when camelCase is undefined', () => {
-      const program = transformDatabase(metadata);
+      const { program } = transformDatabase(metadata);
       const code = serialize(program);
 
       expect(code).toContain('user_id: Generated<number>');
@@ -133,7 +133,7 @@ describe('CamelCase Support', () => {
         ],
       };
 
-      const program = transformDatabase(metadataWithEnum, { camelCase: true });
+      const { program } = transformDatabase(metadataWithEnum, { camelCase: true });
       const code = serialize(program);
 
       expect(code).toContain('accountStatus: StatusEnum');
@@ -159,7 +159,7 @@ describe('CamelCase Support', () => {
         enums: [],
       };
 
-      const program = transformDatabase(metadataWithNullable, { camelCase: true });
+      const { program } = transformDatabase(metadataWithNullable, { camelCase: true });
       const code = serialize(program);
 
       expect(code).toContain('middleName: string | null');

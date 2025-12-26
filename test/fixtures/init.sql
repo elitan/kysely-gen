@@ -73,6 +73,16 @@ GROUP BY u.id, u.username;
 
 CREATE INDEX ON user_stats (id);
 
+-- Materialized view with array column (for Bug 2 test)
+CREATE MATERIALIZED VIEW user_tags_view AS
+SELECT
+  u.id,
+  u.username,
+  u.tags
+FROM users u;
+
+CREATE INDEX ON user_tags_view (id);
+
 -- Create partitioned table
 CREATE TABLE measurements (
   id SERIAL,

@@ -153,6 +153,8 @@ async function introspectMaterializedViews(db: Kysely<any>, schemas: string[]): 
     data_type: string;
     udt_name: string;
     udt_schema: string;
+    typcategory: string;
+    element_type: string | null;
     column_comment: string | null;
   };
 
@@ -167,12 +169,15 @@ async function introspectMaterializedViews(db: Kysely<any>, schemas: string[]): 
       t.typname AS data_type,
       t.typname AS udt_name,
       tn.nspname AS udt_schema,
+      t.typcategory,
+      et.typname AS element_type,
       col_description(c.oid, a.attnum) AS column_comment
     FROM pg_class c
     JOIN pg_namespace n ON n.oid = c.relnamespace
     JOIN pg_attribute a ON a.attrelid = c.oid
     JOIN pg_type t ON t.oid = a.atttypid
     JOIN pg_namespace tn ON tn.oid = t.typnamespace
+    LEFT JOIN pg_type et ON t.typelem = et.oid AND t.typcategory = 'A'
     LEFT JOIN pg_attrdef ad ON ad.adrelid = c.oid AND ad.adnum = a.attnum
     WHERE c.relkind = 'm'
       AND a.attnum > 0
@@ -197,12 +202,8 @@ async function introspectMaterializedViews(db: Kysely<any>, schemas: string[]): 
 
     const table = tableMap.get(tableKey);
     if (table) {
-      const isArray = row.data_type.startsWith('_');
-      let dataType = row.udt_name;
-
-      if (isArray) {
-        dataType = dataType.slice(1);
-      }
+      const isArray = row.typcategory === 'A';
+      const dataType = isArray && row.element_type ? row.element_type : row.udt_name;
 
       const columnMetadata: ColumnMetadata = {
         name: row.column_name,
@@ -211,15 +212,9 @@ async function introspectMaterializedViews(db: Kysely<any>, schemas: string[]): 
         isNullable: row.is_nullable === 'YES',
         isAutoIncrement: row.column_default?.includes('nextval') ?? false,
         hasDefaultValue: row.column_default !== null,
+        ...(isArray && { isArray: true }),
+        ...(row.column_comment && { comment: row.column_comment }),
       };
-
-      if (isArray) {
-        columnMetadata.isArray = true;
-      }
-
-      if (row.column_comment) {
-        columnMetadata.comment = row.column_comment;
-      }
 
       table.columns.push(columnMetadata);
     }
