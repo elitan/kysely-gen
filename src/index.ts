@@ -1,5 +1,5 @@
 /**
- * kysely-typegen - Generate Kysely types from your database
+ * kysely-gen - Generate Kysely types from your database
  */
 
 export { serialize } from '@/ast/serialize';

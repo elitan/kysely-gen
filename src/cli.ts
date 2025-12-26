@@ -13,7 +13,7 @@ import { transformDatabase } from '@/transform';
 const program = new Command();
 
 program
-  .name('kysely-typegen')
+  .name('kysely-gen')
   .description('Generate Kysely types from your PostgreSQL database')
   .version('0.1.0')
   .option('-o, --out <path>', 'Output file path', './db.d.ts')
@@ -59,7 +59,7 @@ async function generate(options: {
     console.error(chalk.cyan('  export DATABASE_URL=postgres://user:password@localhost:5432/db'));
     console.error('');
     console.error('Or pass it via --url flag:');
-    console.error(chalk.cyan('  kysely-typegen --url postgres://user:password@localhost:5432/db'));
+    console.error(chalk.cyan('  kysely-gen --url postgres://user:password@localhost:5432/db'));
     process.exit(1);
   }
 
@@ -67,7 +67,7 @@ async function generate(options: {
   const schemas = options.schema.length > 0 ? options.schema : ['public'];
 
   console.log('');
-  console.log(chalk.bold('kysely-typegen') + chalk.dim(' v0.1.0'));
+  console.log(chalk.bold('kysely-gen') + chalk.dim(' v0.1.0'));
   console.log('');
   console.log(chalk.dim('Connection:'), maskPassword(databaseUrl));
   console.log(chalk.dim('Schemas:'), schemas.join(', '));

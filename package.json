@@ -1,18 +1,18 @@
 {
-  "name": "kysely-typegen",
-  "version": "0.0.1",
+  "name": "kysely-gen",
+  "version": "0.1.0",
   "description": "Modern PostgreSQL type generator for Kysely - Built with Bun and TDD",
   "type": "module",
   "license": "MIT",
-  "author": "kysely-typegen contributors",
+  "author": "kysely-gen contributors",
   "repository": {
     "type": "git",
-    "url": "https://github.com/elitan/kysely-typegen.git"
+    "url": "https://github.com/elitan/kysely-gen.git"
   },
   "bugs": {
-    "url": "https://github.com/elitan/kysely-typegen/issues"
+    "url": "https://github.com/elitan/kysely-gen/issues"
   },
-  "homepage": "https://github.com/elitan/kysely-typegen#readme",
+  "homepage": "https://github.com/elitan/kysely-gen#readme",
   "keywords": [
     "kysely",
     "postgres",
@@ -35,7 +35,7 @@
     "package.json"
   ],
   "bin": {
-    "kysely-typegen": "./dist/cli.js"
+    "kysely-gen": "./dist/cli.js"
   },
   "publishConfig": {
     "access": "public",

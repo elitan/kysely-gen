@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-kysely-typegen is a **PostgreSQL → TypeScript type generator** for Kysely, built with Bun using Test-Driven Development principles. It generates type-safe Kysely database types by introspecting live databases.
+kysely-gen is a **PostgreSQL → TypeScript type generator** for Kysely, built with Bun using Test-Driven Development principles. It generates type-safe Kysely database types by introspecting live databases.
 
 **Core Pipeline:** `PostgreSQL → Introspect → Metadata → Transform → AST → Serialize → TypeScript`
 
@@ -118,7 +118,7 @@ This project uses strict TDD:
 When using the `--camel-case` flag, column and table names are converted from snake_case to camelCase to work seamlessly with Kysely's `CamelCasePlugin`:
 
 ```bash
-kysely-typegen --camel-case
+kysely-gen --camel-case
 ```
 
 **Conversions:**
@@ -171,5 +171,5 @@ This makes auto-increment and default-value columns optional during insert opera
 
 ## Notes
 
-- `kysely-typegen` is a successor of `kysely-codegen`. You do have access to the source code of `kysely-codegen`.
+- `kysely-gen` is a successor of `kysely-codegen`. You do have access to the source code of `kysely-codegen`.
 - do not use emojis. ever.
