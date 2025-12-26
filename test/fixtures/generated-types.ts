@@ -1,0 +1,82 @@
+import type { ColumnType } from 'kysely';
+
+export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
+  ? ColumnType<S, I | undefined, U>
+  : ColumnType<T, T | undefined, T>;
+
+export type StatusEnum = 'pending' | 'approved' | 'rejected';
+
+export interface Comment {
+  id: Generated<number>;
+  post_id: number;
+  user_id: number;
+  content: string;
+  status: StatusEnum;
+  created_at: ColumnType<Date, Date | string, Date | string>;
+}
+
+export interface Measurement {
+  id: Generated<number>;
+  measure_date: ColumnType<Date, Date | string, Date | string>;
+  value: ColumnType<string, number | string, number | string>;
+  sensor_id: number;
+}
+
+export interface Measurements2024Q1 {
+  id: Generated<number>;
+  measure_date: ColumnType<Date, Date | string, Date | string>;
+  value: ColumnType<string, number | string, number | string>;
+  sensor_id: number;
+}
+
+export interface Measurements2024Q2 {
+  id: Generated<number>;
+  measure_date: ColumnType<Date, Date | string, Date | string>;
+  value: ColumnType<string, number | string, number | string>;
+  sensor_id: number;
+}
+
+export interface Post {
+  id: Generated<number>;
+  user_id: number;
+  title: string;
+  content: string | null;
+  published_at: ColumnType<Date, Date | string, Date | string> | null;
+  view_count: number;
+}
+
+export interface User {
+  id: Generated<number>;
+  email: string;
+  username: string;
+  created_at: ColumnType<Date, Date | string, Date | string>;
+  updated_at: ColumnType<Date, Date | string, Date | string> | null;
+  is_active: boolean;
+  metadata: unknown | null;
+  tags: string[] | null;
+  scores: number[] | null;
+}
+
+export interface UserStat {
+  id: number | null;
+  username: string | null;
+  post_count: ColumnType<string, string | number | bigint, string | number | bigint> | null;
+  comment_count: ColumnType<string, string | number | bigint, string | number | bigint> | null;
+}
+
+export interface UserTagsView {
+  id: number | null;
+  username: string | null;
+  tags: string[] | null;
+}
+
+export interface DB {
+  comments: Comment;
+  measurements: Measurement;
+  measurements_2024_q1: Measurements2024Q1;
+  measurements_2024_q2: Measurements2024Q2;
+  posts: Post;
+  users: User;
+  user_stats: UserStat;
+  user_tags_view: UserTagsView;
+}
