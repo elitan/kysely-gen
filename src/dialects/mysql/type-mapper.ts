@@ -1,4 +1,5 @@
 import type { TypeNode } from '@/ast/nodes';
+import type { MapTypeOptions } from '@/dialects/types';
 
 function createColumnType(
   selectType: TypeNode,
@@ -22,41 +23,22 @@ function createColumnType(
   };
 }
 
-export function mapPostgresType(
-  pgType: string,
-  isNullable: boolean,
-  isArray?: boolean,
-  unknownTypes?: Set<string>
-): TypeNode {
-  if (isArray || pgType.endsWith('[]')) {
-    const baseTypeName = pgType.endsWith('[]') ? pgType.slice(0, -2) : pgType;
-    const elementType = mapPostgresType(baseTypeName, false, false, unknownTypes);
-    const arrayType: TypeNode = {
-      kind: 'array',
-      elementType,
-    };
-
-    if (isNullable) {
-      return {
-        kind: 'union',
-        types: [arrayType, { kind: 'primitive', value: 'null' }],
-      };
-    }
-
-    return arrayType;
-  }
+export function mapMysqlType(dataType: string, options: MapTypeOptions): TypeNode {
+  const { isNullable, unknownTypes } = options;
 
   let baseType: TypeNode;
+  const lowerType = dataType.toLowerCase();
 
-  switch (pgType) {
-    case 'int2':
-    case 'int4':
+  switch (lowerType) {
+    case 'tinyint':
     case 'smallint':
+    case 'mediumint':
+    case 'int':
     case 'integer':
+    case 'year':
       baseType = { kind: 'primitive', value: 'number' };
       break;
 
-    case 'int8':
     case 'bigint':
       baseType = createColumnType(
         { kind: 'primitive', value: 'string' },
@@ -79,15 +61,14 @@ export function mapPostgresType(
       );
       break;
 
-    case 'float4':
-    case 'float8':
+    case 'float':
+    case 'double':
     case 'real':
-    case 'double precision':
       baseType = { kind: 'primitive', value: 'number' };
       break;
 
-    case 'numeric':
     case 'decimal':
+    case 'numeric':
       baseType = createColumnType(
         { kind: 'primitive', value: 'string' },
         {
@@ -107,22 +88,31 @@ export function mapPostgresType(
       );
       break;
 
-    case 'varchar':
     case 'char':
+    case 'varchar':
     case 'text':
-    case 'citext':
-    case 'uuid':
+    case 'tinytext':
+    case 'mediumtext':
+    case 'longtext':
       baseType = { kind: 'primitive', value: 'string' };
       break;
 
-    case 'bool':
-    case 'boolean':
-      baseType = { kind: 'primitive', value: 'boolean' };
+    case 'bit':
+      baseType = { kind: 'primitive', value: 'Buffer' };
       break;
 
-    case 'timestamp':
-    case 'timestamptz':
+    case 'binary':
+    case 'varbinary':
+    case 'blob':
+    case 'tinyblob':
+    case 'mediumblob':
+    case 'longblob':
+      baseType = { kind: 'primitive', value: 'Buffer' };
+      break;
+
     case 'date':
+    case 'datetime':
+    case 'timestamp':
       baseType = createColumnType(
         { kind: 'primitive', value: 'Date' },
         {
@@ -143,55 +133,40 @@ export function mapPostgresType(
       break;
 
     case 'time':
-    case 'timetz':
-      baseType = { kind: 'primitive', value: 'string' };
-      break;
-
-    case 'interval':
-      baseType = createColumnType(
-        { kind: 'reference', name: 'IPostgresInterval' },
-        {
-          kind: 'union',
-          types: [
-            { kind: 'reference', name: 'IPostgresInterval' },
-            { kind: 'primitive', value: 'string' },
-          ],
-        },
-        {
-          kind: 'union',
-          types: [
-            { kind: 'reference', name: 'IPostgresInterval' },
-            { kind: 'primitive', value: 'string' },
-          ],
-        }
-      );
-      break;
-
-    case 'money':
       baseType = { kind: 'primitive', value: 'string' };
       break;
 
     case 'json':
-    case 'jsonb':
       baseType = { kind: 'reference', name: 'JsonValue' };
       break;
 
-    case 'bytea':
-      baseType = { kind: 'primitive', value: 'Buffer' };
+    case 'set':
+      baseType = { kind: 'primitive', value: 'string' };
       break;
 
-    case 'int4range':
-    case 'int8range':
-    case 'numrange':
-    case 'daterange':
-    case 'tsrange':
-    case 'tstzrange':
-      baseType = { kind: 'primitive', value: 'string' };
+    case 'point':
+      baseType = { kind: 'reference', name: 'Point' };
+      break;
+
+    case 'linestring':
+      baseType = { kind: 'reference', name: 'LineString' };
+      break;
+
+    case 'polygon':
+      baseType = { kind: 'reference', name: 'Polygon' };
+      break;
+
+    case 'geometry':
+    case 'geometrycollection':
+    case 'multipoint':
+    case 'multilinestring':
+    case 'multipolygon':
+      baseType = { kind: 'reference', name: 'Geometry' };
       break;
 
     default:
       if (unknownTypes) {
-        unknownTypes.add(pgType);
+        unknownTypes.add(dataType);
       }
       baseType = { kind: 'primitive', value: 'unknown' };
   }

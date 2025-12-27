@@ -1,7 +1,7 @@
 {
   "name": "kysely-gen",
   "version": "0.3.0",
-  "description": "Modern PostgreSQL type generator for Kysely - Built with Bun and TDD",
+  "description": "Database type generator for Kysely - Supports PostgreSQL and MySQL",
   "type": "module",
   "license": "MIT",
   "author": "kysely-gen contributors",
@@ -17,6 +17,7 @@
     "kysely",
     "postgres",
     "postgresql",
+    "mysql",
     "typescript",
     "codegen",
     "typegen",
@@ -63,10 +64,20 @@
     "@types/bun": "^1.1.12",
     "@types/micromatch": "^4.0.10",
     "@types/pg": "^8.11.10",
+    "mysql2": "^3.11.0",
     "typescript": "^5.6.3"
   },
   "peerDependencies": {
     "kysely": ">=0.27.0 <1.0.0",
-    "pg": ">=8.8.0 <9.0.0"
+    "pg": ">=8.8.0 <9.0.0",
+    "mysql2": ">=3.0.0 <4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "pg": {
+      "optional": true
+    },
+    "mysql2": {
+      "optional": true
+    }
   }
 }

@@ -1,23 +1,37 @@
 # kysely-gen
 
-Generate TypeScript types from your PostgreSQL database for [Kysely](https://kysely.dev/).
+Generate TypeScript types from your database for [Kysely](https://kysely.dev/).
+
+Supports PostgreSQL and MySQL.
 
 ## Install
 
 ```sh
+# PostgreSQL
 npm install kysely-gen kysely pg
+
+# MySQL
+npm install kysely-gen kysely mysql2
 ```
 
 ## Usage
 
 ```sh
+# PostgreSQL (auto-detected from URL)
 DATABASE_URL=postgres://user:pass@localhost:5432/db npx kysely-gen
+
+# MySQL (auto-detected from URL)
+DATABASE_URL=mysql://user:pass@localhost:3306/db npx kysely-gen
+
+# Explicit dialect
+npx kysely-gen --dialect mysql --url mysql://user:pass@localhost:3306/db
 ```
 
 ## Options
 
 | Option | Description |
 |--------|-------------|
+| `--dialect <name>` | Database dialect: `postgres` or `mysql` (auto-detected from URL) |
 | `--out <path>` | Output file (default: `./db.d.ts`) |
 | `--schema <name>` | Schema to introspect (repeatable) |
 | `--url <string>` | Database URL (overrides `DATABASE_URL`) |
@@ -56,11 +70,44 @@ export interface DB {
 
 ## Features
 
-- PostgreSQL enums mapped to union types
+### PostgreSQL
+- Enums mapped to union types
 - `ColumnType` for select/insert/update type differences
 - `Generated<T>` for auto-increment and default columns
 - Materialized views, domains, partitioned tables
-- Glob patterns for table filtering
+- Array columns
+
+### MySQL
+- Enums parsed from column definitions
+- `ColumnType` for timestamps, bigint, decimal
+- `Generated<T>` for auto_increment columns
+- Views
+- Geometry types (Point, LineString, Polygon)
+- `tinyint(1)` mapped to boolean
+
+## Type Mappings
+
+### PostgreSQL
+| PostgreSQL | TypeScript |
+|------------|------------|
+| `int2`, `int4`, `integer` | `number` |
+| `int8`, `bigint` | `ColumnType<string, string \| number \| bigint, ...>` |
+| `numeric`, `decimal` | `ColumnType<string, number \| string, ...>` |
+| `timestamp`, `date` | `ColumnType<Date, Date \| string, ...>` |
+| `jsonb`, `json` | `JsonValue` |
+| `text[]`, `int4[]` | `string[]`, `number[]` |
+
+### MySQL
+| MySQL | TypeScript |
+|-------|------------|
+| `tinyint(1)` | `boolean` |
+| `int`, `smallint` | `number` |
+| `bigint` | `ColumnType<string, string \| number \| bigint, ...>` |
+| `decimal` | `ColumnType<string, number \| string, ...>` |
+| `datetime`, `timestamp` | `ColumnType<Date, Date \| string, ...>` |
+| `json` | `JsonValue` |
+| `point` | `Point` |
+| `enum('a','b')` | `'a' \| 'b'` |
 
 ## License
 
