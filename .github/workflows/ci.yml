@@ -59,7 +59,7 @@ jobs:
 
       - name: Initialize MySQL
         run: |
-          mysql -h 127.0.0.1 -P 3307 -u test_user -ptest_password test_db < test/fixtures/mysql-init.sql
+          mysql -h 127.0.0.1 -P 3307 -u root -proot_password < test/fixtures/mysql-init.sql
 
       - name: Run tests
         run: bun test

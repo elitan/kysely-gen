@@ -1,5 +1,8 @@
 -- Test database schema for MySQL
 
+-- Use the main test database
+USE test_db;
+
 -- Create test schema and grant permissions
 CREATE DATABASE IF NOT EXISTS test_schema;
 GRANT ALL PRIVILEGES ON test_schema.* TO 'test_user'@'%';
