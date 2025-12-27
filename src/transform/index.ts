@@ -80,6 +80,21 @@ export function transformDatabase(metadata: DatabaseMetadata, options?: Transfor
     exported: true,
   });
 
+  declarations.push({
+    kind: 'interface',
+    name: 'IPostgresInterval',
+    properties: [
+      { name: 'years', type: { kind: 'primitive', value: 'number' }, optional: true },
+      { name: 'months', type: { kind: 'primitive', value: 'number' }, optional: true },
+      { name: 'days', type: { kind: 'primitive', value: 'number' }, optional: true },
+      { name: 'hours', type: { kind: 'primitive', value: 'number' }, optional: true },
+      { name: 'minutes', type: { kind: 'primitive', value: 'number' }, optional: true },
+      { name: 'seconds', type: { kind: 'primitive', value: 'number' }, optional: true },
+      { name: 'milliseconds', type: { kind: 'primitive', value: 'number' }, optional: true },
+    ],
+    exported: true,
+  });
+
   for (const enumMetadata of metadata.enums) {
     declarations.push(transformEnum(enumMetadata));
   }

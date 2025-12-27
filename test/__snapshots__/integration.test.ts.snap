@@ -15,6 +15,16 @@ export type JsonObject = { [key: string]: JsonValue };
 
 export type JsonValue = JsonPrimitive | JsonObject | JsonArray;
 
+export interface IPostgresInterval {
+  years?: number;
+  months?: number;
+  days?: number;
+  hours?: number;
+  minutes?: number;
+  seconds?: number;
+  milliseconds?: number;
+}
+
 export type StatusEnum = 'pending' | 'approved' | 'rejected';
 
 export interface Comment {

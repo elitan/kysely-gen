@@ -89,8 +89,8 @@ describe('Transform', () => {
 
       const { program } = transformDatabase(metadata);
 
-      // Should have import, Generated type, 4 JSON types, and 2 interfaces (User + DB)
-      expect(program.declarations).toHaveLength(8);
+      // Should have import, Generated type, 4 JSON types, IPostgresInterval, and 2 interfaces (User + DB)
+      expect(program.declarations).toHaveLength(9);
 
       // Check import
       const importDecl = program.declarations[0];
@@ -328,9 +328,11 @@ describe('Transform', () => {
         includePattern: ['public.user*'],
       });
 
-      const interfaces = program.declarations.filter((d) => d.kind === 'interface' && d.name !== 'DB');
-      expect(interfaces).toHaveLength(1);
-      expect(interfaces[0]?.name).toBe('User');
+      const tableInterfaces = program.declarations.filter(
+        (d) => d.kind === 'interface' && d.name !== 'DB' && d.name !== 'IPostgresInterval'
+      );
+      expect(tableInterfaces).toHaveLength(1);
+      expect(tableInterfaces[0]?.name).toBe('User');
     });
 
     test('should exclude matching tables with exclude pattern', () => {
@@ -338,10 +340,12 @@ describe('Transform', () => {
         excludePattern: ['*internal*'],
       });
 
-      const interfaces = program.declarations.filter((d) => d.kind === 'interface' && d.name !== 'DB');
-      expect(interfaces).toHaveLength(3);
+      const tableInterfaces = program.declarations.filter(
+        (d) => d.kind === 'interface' && d.name !== 'DB' && d.name !== 'IPostgresInterval'
+      );
+      expect(tableInterfaces).toHaveLength(3);
 
-      const names = interfaces.map((i) => i.name);
+      const names = tableInterfaces.map((i) => i.name);
       expect(names).toContain('User');
       expect(names).toContain('Post');
       expect(names).toContain('Session');
@@ -353,10 +357,12 @@ describe('Transform', () => {
         includePattern: ['public.users', 'auth.*'],
       });
 
-      const interfaces = program.declarations.filter((d) => d.kind === 'interface' && d.name !== 'DB');
-      expect(interfaces).toHaveLength(2);
+      const tableInterfaces = program.declarations.filter(
+        (d) => d.kind === 'interface' && d.name !== 'DB' && d.name !== 'IPostgresInterval'
+      );
+      expect(tableInterfaces).toHaveLength(2);
 
-      const names = interfaces.map((i) => i.name);
+      const names = tableInterfaces.map((i) => i.name);
       expect(names).toContain('User');
       expect(names).toContain('Session');
     });
@@ -367,10 +373,12 @@ describe('Transform', () => {
         excludePattern: ['*internal*'],
       });
 
-      const interfaces = program.declarations.filter((d) => d.kind === 'interface' && d.name !== 'DB');
-      expect(interfaces).toHaveLength(2);
+      const tableInterfaces = program.declarations.filter(
+        (d) => d.kind === 'interface' && d.name !== 'DB' && d.name !== 'IPostgresInterval'
+      );
+      expect(tableInterfaces).toHaveLength(2);
 
-      const names = interfaces.map((i) => i.name);
+      const names = tableInterfaces.map((i) => i.name);
       expect(names).toContain('User');
       expect(names).toContain('Post');
       expect(names).not.toContain('InternalLog');
@@ -582,8 +590,14 @@ describe('Transform', () => {
       expect(mapPostgresType('money', false)).toEqual({ kind: 'primitive', value: 'string' });
     });
 
-    test('should map interval to string', () => {
-      expect(mapPostgresType('interval', false)).toEqual({ kind: 'primitive', value: 'string' });
+    test('should map interval to ColumnType with IPostgresInterval', () => {
+      const result = mapPostgresType('interval', false);
+      expect(result.kind).toBe('generic');
+      if (result.kind === 'generic') {
+        expect(result.name).toBe('ColumnType');
+        expect(result.typeArguments).toHaveLength(3);
+        expect(result.typeArguments[0]).toEqual({ kind: 'reference', name: 'IPostgresInterval' });
+      }
     });
 
     test('should map range types to string', () => {
@@ -1126,6 +1140,128 @@ describe('Transform', () => {
         if (metadataProp?.type.kind === 'union') {
           expect(metadataProp.type.types[0]).toEqual({ kind: 'reference', name: 'JsonValue' });
           expect(metadataProp.type.types[1]).toEqual({ kind: 'primitive', value: 'null' });
+        }
+      }
+    });
+  });
+
+  describe('interval types', () => {
+    test('should include IPostgresInterval interface in output', () => {
+      const metadata: DatabaseMetadata = {
+        tables: [
+          {
+            schema: 'public',
+            name: 'tasks',
+            columns: [
+              {
+                name: 'id',
+                dataType: 'int4',
+                isNullable: false,
+                isAutoIncrement: true,
+                hasDefaultValue: true,
+              },
+              {
+                name: 'duration',
+                dataType: 'interval',
+                isNullable: false,
+                isAutoIncrement: false,
+                hasDefaultValue: false,
+              },
+            ],
+          },
+        ],
+        enums: [],
+      };
+
+      const { program } = transformDatabase(metadata);
+
+      const intervalInterface = program.declarations.find(
+        (d) => d.kind === 'interface' && d.name === 'IPostgresInterval'
+      );
+      expect(intervalInterface).toBeDefined();
+      if (intervalInterface?.kind === 'interface') {
+        expect(intervalInterface.exported).toBe(true);
+        const propNames = intervalInterface.properties.map((p) => p.name);
+        expect(propNames).toContain('years');
+        expect(propNames).toContain('months');
+        expect(propNames).toContain('days');
+        expect(propNames).toContain('hours');
+        expect(propNames).toContain('minutes');
+        expect(propNames).toContain('seconds');
+        expect(propNames).toContain('milliseconds');
+      }
+    });
+
+    test('should map interval column to ColumnType with IPostgresInterval', () => {
+      const metadata: DatabaseMetadata = {
+        tables: [
+          {
+            schema: 'public',
+            name: 'events',
+            columns: [
+              {
+                name: 'duration',
+                dataType: 'interval',
+                isNullable: false,
+                isAutoIncrement: false,
+                hasDefaultValue: false,
+              },
+            ],
+          },
+        ],
+        enums: [],
+      };
+
+      const { program } = transformDatabase(metadata);
+
+      const eventInterface = program.declarations.find(
+        (d) => d.kind === 'interface' && d.name === 'Event'
+      );
+      expect(eventInterface).toBeDefined();
+      if (eventInterface?.kind === 'interface') {
+        const durationProp = eventInterface.properties.find((p) => p.name === 'duration');
+        expect(durationProp?.type.kind).toBe('generic');
+        if (durationProp?.type.kind === 'generic') {
+          expect(durationProp.type.name).toBe('ColumnType');
+          expect(durationProp.type.typeArguments[0]).toEqual({
+            kind: 'reference',
+            name: 'IPostgresInterval',
+          });
+        }
+      }
+    });
+
+    test('should handle nullable interval columns', () => {
+      const metadata: DatabaseMetadata = {
+        tables: [
+          {
+            schema: 'public',
+            name: 'tasks',
+            columns: [
+              {
+                name: 'timeout',
+                dataType: 'interval',
+                isNullable: true,
+                isAutoIncrement: false,
+                hasDefaultValue: false,
+              },
+            ],
+          },
+        ],
+        enums: [],
+      };
+
+      const { program } = transformDatabase(metadata);
+
+      const taskInterface = program.declarations.find(
+        (d) => d.kind === 'interface' && d.name === 'Task'
+      );
+      if (taskInterface?.kind === 'interface') {
+        const timeoutProp = taskInterface.properties.find((p) => p.name === 'timeout');
+        expect(timeoutProp?.type.kind).toBe('union');
+        if (timeoutProp?.type.kind === 'union') {
+          expect(timeoutProp.type.types[0].kind).toBe('generic');
+          expect(timeoutProp.type.types[1]).toEqual({ kind: 'primitive', value: 'null' });
         }
       }
     });

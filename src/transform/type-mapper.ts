@@ -144,8 +144,27 @@ export function mapPostgresType(
 
     case 'time':
     case 'timetz':
-    case 'interval':
       baseType = { kind: 'primitive', value: 'string' };
+      break;
+
+    case 'interval':
+      baseType = createColumnType(
+        { kind: 'reference', name: 'IPostgresInterval' },
+        {
+          kind: 'union',
+          types: [
+            { kind: 'reference', name: 'IPostgresInterval' },
+            { kind: 'primitive', value: 'string' },
+          ],
+        },
+        {
+          kind: 'union',
+          types: [
+            { kind: 'reference', name: 'IPostgresInterval' },
+            { kind: 'primitive', value: 'string' },
+          ],
+        }
+      );
       break;
 
     case 'money':
