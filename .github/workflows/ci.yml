@@ -26,6 +26,21 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root_password
+          MYSQL_USER: test_user
+          MYSQL_PASSWORD: test_password
+          MYSQL_DATABASE: test_db
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h localhost -u test_user -ptest_password"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -38,10 +53,13 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Initialize database
+      - name: Initialize PostgreSQL
         run: |
-          bun add pg
           PGPASSWORD=test_password psql -h localhost -p 5433 -U test_user -d test_db -f test/fixtures/init.sql
+
+      - name: Initialize MySQL
+        run: |
+          mysql -h 127.0.0.1 -P 3307 -u test_user -ptest_password test_db < test/fixtures/mysql-init.sql
 
       - name: Run tests
         run: bun test
