@@ -15,3 +15,21 @@ services:
       interval: 2s
       timeout: 5s
       retries: 5
+
+  mysql:
+    image: mysql:8.0
+    container_name: kysely-gen-test-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_USER: test_user
+      MYSQL_PASSWORD: test_password
+      MYSQL_DATABASE: test_db
+    ports:
+      - '3307:3306'
+    volumes:
+      - ./test/fixtures/mysql-init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'test_user', '-ptest_password']
+      interval: 2s
+      timeout: 5s
+      retries: 10

@@ -1,10 +1,7 @@
 import type { Kysely } from 'kysely';
 import { sql } from 'kysely';
-import type { ColumnMetadata, DatabaseMetadata, EnumMetadata, TableMetadata } from './types';
-
-type IntrospectionOptions = {
-  schemas: string[];
-};
+import type { ColumnMetadata, DatabaseMetadata, EnumMetadata, TableMetadata } from '@/introspect/types';
+import type { IntrospectOptions } from '@/dialects/types';
 
 type RawColumn = {
   table_schema: string;
@@ -36,12 +33,9 @@ type PartitionInfo = {
   name: string;
 };
 
-/**
- * Introspect a PostgreSQL database and return metadata
- */
-export async function introspectDatabase(
+export async function introspectPostgres(
   db: Kysely<any>,
-  options: IntrospectionOptions,
+  options: IntrospectOptions,
 ): Promise<DatabaseMetadata> {
   const [domains, partitions, baseTables, regularViews, materializedViews, enums] = await Promise.all([
     introspectDomains(db),
@@ -52,7 +46,6 @@ export async function introspectDatabase(
     introspectEnums(db, options.schemas),
   ]);
 
-  // Resolve domain types to their root types and mark partitions
   const tables = [...baseTables, ...regularViews, ...materializedViews].map((table) => {
     const isPartition = partitions.some(
       (partition) => partition.schema === table.schema && partition.name === table.name
@@ -382,12 +375,10 @@ function isAutoIncrementColumn(column: RawColumn): boolean {
 }
 
 function parsePostgresArray(value: string | string[]): string[] {
-  // If it's already an array, return it
   if (Array.isArray(value)) {
     return value;
   }
 
-  // Parse PostgreSQL array format: {value1,value2,value3}
   if (typeof value === 'string' && value.startsWith('{') && value.endsWith('}')) {
     return value.slice(1, -1).split(',');
   }

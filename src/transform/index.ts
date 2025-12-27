@@ -1,16 +1,30 @@
-import type { InterfaceNode, TypeAliasNode } from '@/ast/nodes';
+import type { InterfaceNode, TypeAliasNode, TypeNode } from '@/ast/nodes';
 import type { DatabaseMetadata } from '@/introspect/types';
-import type { TransformOptions, TransformResult, TransformWarning } from '@/transform/types';
+import type { TransformOptions, TransformResult, TransformWarning, TypeMapper } from '@/transform/types';
 import { filterTables } from '@/transform/filter';
 import { transformEnum } from '@/transform/enum';
 import { transformTable, createDBInterface } from '@/transform/table';
+import { getDialect } from '@/dialects';
+import { mapPostgresType as _mapPostgresType } from '@/dialects/postgres/type-mapper';
 
-export { mapPostgresType } from '@/transform/type-mapper';
-export type { TransformOptions, TransformResult, TransformWarning } from '@/transform/types';
+export type { TransformOptions, TransformResult, TransformWarning, TypeMapper } from '@/transform/types';
+
+export function mapPostgresType(
+  pgType: string,
+  isNullable: boolean,
+  isArray?: boolean,
+  unknownTypes?: Set<string>
+): TypeNode {
+  return _mapPostgresType(pgType, { isNullable, isArray, unknownTypes });
+}
 
 export function transformDatabase(metadata: DatabaseMetadata, options?: TransformOptions): TransformResult {
   const declarations: (InterfaceNode | TypeAliasNode)[] = [];
   const unknownTypes = new Set<string>();
+
+  const dialectName = options?.dialectName ?? 'postgres';
+  const dialect = getDialect(dialectName);
+  const mapType: TypeMapper = options?.mapType ?? ((dataType, opts) => dialect.mapType(dataType, opts));
 
   declarations.push({
     kind: 'import',
@@ -80,20 +94,62 @@ export function transformDatabase(metadata: DatabaseMetadata, options?: Transfor
     exported: true,
   });
 
-  declarations.push({
-    kind: 'interface',
-    name: 'IPostgresInterval',
-    properties: [
-      { name: 'years', type: { kind: 'primitive', value: 'number' }, optional: true },
-      { name: 'months', type: { kind: 'primitive', value: 'number' }, optional: true },
-      { name: 'days', type: { kind: 'primitive', value: 'number' }, optional: true },
-      { name: 'hours', type: { kind: 'primitive', value: 'number' }, optional: true },
-      { name: 'minutes', type: { kind: 'primitive', value: 'number' }, optional: true },
-      { name: 'seconds', type: { kind: 'primitive', value: 'number' }, optional: true },
-      { name: 'milliseconds', type: { kind: 'primitive', value: 'number' }, optional: true },
-    ],
-    exported: true,
-  });
+  if (dialectName === 'postgres') {
+    declarations.push({
+      kind: 'interface',
+      name: 'IPostgresInterval',
+      properties: [
+        { name: 'years', type: { kind: 'primitive', value: 'number' }, optional: true },
+        { name: 'months', type: { kind: 'primitive', value: 'number' }, optional: true },
+        { name: 'days', type: { kind: 'primitive', value: 'number' }, optional: true },
+        { name: 'hours', type: { kind: 'primitive', value: 'number' }, optional: true },
+        { name: 'minutes', type: { kind: 'primitive', value: 'number' }, optional: true },
+        { name: 'seconds', type: { kind: 'primitive', value: 'number' }, optional: true },
+        { name: 'milliseconds', type: { kind: 'primitive', value: 'number' }, optional: true },
+      ],
+      exported: true,
+    });
+  }
+
+  if (dialectName === 'mysql') {
+    declarations.push({
+      kind: 'interface',
+      name: 'Point',
+      properties: [
+        { name: 'x', type: { kind: 'primitive', value: 'number' }, optional: false },
+        { name: 'y', type: { kind: 'primitive', value: 'number' }, optional: false },
+      ],
+      exported: true,
+    });
+
+    declarations.push({
+      kind: 'typeAlias',
+      name: 'LineString',
+      type: { kind: 'array', elementType: { kind: 'reference', name: 'Point' } },
+      exported: true,
+    });
+
+    declarations.push({
+      kind: 'typeAlias',
+      name: 'Polygon',
+      type: { kind: 'array', elementType: { kind: 'reference', name: 'LineString' } },
+      exported: true,
+    });
+
+    declarations.push({
+      kind: 'typeAlias',
+      name: 'Geometry',
+      type: {
+        kind: 'union',
+        types: [
+          { kind: 'reference', name: 'Point' },
+          { kind: 'reference', name: 'LineString' },
+          { kind: 'reference', name: 'Polygon' },
+        ],
+      },
+      exported: true,
+    });
+  }
 
   for (const enumMetadata of metadata.enums) {
     declarations.push(transformEnum(enumMetadata));
@@ -103,7 +159,7 @@ export function transformDatabase(metadata: DatabaseMetadata, options?: Transfor
 
   const tableInterfaces: InterfaceNode[] = [];
   for (const table of filteredTables) {
-    tableInterfaces.push(transformTable(table, metadata.enums, options, unknownTypes));
+    tableInterfaces.push(transformTable(table, metadata.enums, mapType, options, unknownTypes));
   }
   declarations.push(...tableInterfaces);
 

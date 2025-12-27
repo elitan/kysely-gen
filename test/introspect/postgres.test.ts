@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { Kysely, PostgresDialect } from 'kysely';
 import { Pool } from 'pg';
-import { introspectDatabase } from '@/introspect/postgres';
+import { introspectPostgres as introspectDatabase } from '@/dialects/postgres/introspect';
 
 const TEST_DATABASE_URL = 'postgres://test_user:test_password@localhost:5433/test_db';
 

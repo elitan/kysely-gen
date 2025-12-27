@@ -2,23 +2,24 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
-import { Kysely, PostgresDialect } from 'kysely';
-import { Pool } from 'pg';
+import { Kysely } from 'kysely';
 import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { serialize } from '@/ast/serialize';
-import { introspectDatabase } from '@/introspect/postgres';
 import { transformDatabase } from '@/transform';
+import { getDialect, detectDialect } from '@/dialects';
+import type { DialectName } from '@/dialects/types';
 
 const program = new Command();
 
 program
   .name('kysely-gen')
-  .description('Generate Kysely types from your PostgreSQL database')
+  .description('Generate Kysely types from your database')
   .version('0.1.0')
   .option('-o, --out <path>', 'Output file path', './db.d.ts')
   .option('-s, --schema <name>', 'Schema to introspect (can be specified multiple times)', collect, [])
   .option('--url <connection-string>', 'Database connection string (overrides DATABASE_URL env)')
+  .option('-d, --dialect <name>', 'Database dialect (postgres, mysql). Auto-detected from URL if not specified')
   .option('--camel-case', 'Convert column and table names to camelCase (use with Kysely CamelCasePlugin)')
   .option('--include-pattern <pattern>', 'Only include tables matching glob pattern (schema.table format)', collect, [])
   .option('--exclude-pattern <pattern>', 'Exclude tables matching glob pattern (schema.table format)', collect, [])
@@ -46,14 +47,14 @@ async function generate(options: {
   out: string;
   schema: string[];
   url?: string;
+  dialect?: string;
   camelCase?: boolean;
   includePattern: string[];
   excludePattern: string[];
 }) {
-  // Get DATABASE_URL from options or environment
   const databaseUrl = options.url || process.env.DATABASE_URL;
   if (!databaseUrl) {
-    console.error(chalk.red('✗ Error: DATABASE_URL environment variable is required'));
+    console.error(chalk.red('Error: DATABASE_URL environment variable is required'));
     console.error('');
     console.error('Set it in your environment:');
     console.error(chalk.cyan('  export DATABASE_URL=postgres://user:password@localhost:5432/db'));
@@ -63,33 +64,49 @@ async function generate(options: {
     process.exit(1);
   }
 
+  let dialectName: DialectName;
+  if (options.dialect) {
+    if (options.dialect !== 'postgres' && options.dialect !== 'mysql') {
+      console.error(chalk.red(`Error: Unknown dialect '${options.dialect}'. Supported: postgres, mysql`));
+      process.exit(1);
+    }
+    dialectName = options.dialect;
+  } else {
+    const detected = detectDialect(databaseUrl);
+    if (!detected) {
+      console.error(chalk.red('Error: Could not detect dialect from URL. Use --dialect flag.'));
+      process.exit(1);
+    }
+    dialectName = detected;
+  }
+
+  const dialect = getDialect(dialectName);
   const outputPath = options.out;
   const schemas = options.schema.length > 0 ? options.schema : ['public'];
 
   console.log('');
   console.log(chalk.bold('kysely-gen') + chalk.dim(' v0.1.0'));
   console.log('');
+  console.log(chalk.dim('Dialect:'), dialectName);
   console.log(chalk.dim('Connection:'), maskPassword(databaseUrl));
   console.log(chalk.dim('Schemas:'), schemas.join(', '));
   console.log(chalk.dim('Output:'), resolve(outputPath));
   console.log('');
 
-  // Connect and introspect
   const spinner = ora('Connecting to database...').start();
 
   let db: Kysely<any>;
   try {
-    const pool = new Pool({ connectionString: databaseUrl });
-    db = new Kysely({ dialect: new PostgresDialect({ pool }) });
+    const kyselyDialect = await dialect.createKyselyDialect(databaseUrl);
+    db = new Kysely({ dialect: kyselyDialect });
     spinner.succeed('Connected to database');
   } catch (error) {
     spinner.fail('Failed to connect to database');
     throw error;
   }
 
-  // Introspect
   spinner.start('Introspecting database schema...');
-  const metadata = await introspectDatabase(db, { schemas });
+  const metadata = await dialect.introspect(db, { schemas });
 
   const tableCount = metadata.tables.length;
   const enumCount = metadata.enums.length;
@@ -107,12 +124,13 @@ async function generate(options: {
 
   // Transform and generate
   spinner.start('Generating TypeScript types...');
-  const { program, warnings } = transformDatabase(metadata, {
+  const { program: astProgram, warnings } = transformDatabase(metadata, {
+    dialectName,
     camelCase: options.camelCase,
     includePattern: options.includePattern.length > 0 ? options.includePattern : undefined,
     excludePattern: options.excludePattern.length > 0 ? options.excludePattern : undefined,
   });
-  const code = serialize(program);
+  const code = serialize(astProgram);
 
   // Write to file
   const absolutePath = resolve(outputPath);

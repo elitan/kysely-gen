@@ -1,9 +1,17 @@
-import type { ProgramNode } from '@/ast/nodes';
+import type { ProgramNode, TypeNode } from '@/ast/nodes';
+import type { DialectName } from '@/dialects/types';
+
+export type TypeMapper = (
+  dataType: string,
+  options: { isNullable: boolean; isArray?: boolean; unknownTypes?: Set<string> }
+) => TypeNode;
 
 export type TransformOptions = {
   camelCase?: boolean;
   includePattern?: string[];
   excludePattern?: string[];
+  dialectName?: DialectName;
+  mapType?: TypeMapper;
 };
 
 export type TransformWarning = {
