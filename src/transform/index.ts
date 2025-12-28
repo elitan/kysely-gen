@@ -2,7 +2,7 @@ import type { InterfaceNode, TypeAliasNode, TypeNode } from '@/ast/nodes';
 import type { DatabaseMetadata } from '@/introspect/types';
 import type { TransformOptions, TransformResult, TransformWarning, TypeMapper } from '@/transform/types';
 import { filterTables } from '@/transform/filter';
-import { transformEnum } from '@/transform/enum';
+import { transformEnum, EnumNameResolver } from '@/transform/enum';
 import { transformTable, createDBInterface } from '@/transform/table';
 import { getDialect } from '@/dialects';
 import { mapPostgresType as _mapPostgresType } from '@/dialects/postgres/type-mapper';
@@ -151,15 +151,17 @@ export function transformDatabase(metadata: DatabaseMetadata, options?: Transfor
     });
   }
 
+  const enumResolver = new EnumNameResolver(metadata.enums);
+
   for (const enumMetadata of metadata.enums) {
-    declarations.push(transformEnum(enumMetadata));
+    declarations.push(transformEnum(enumMetadata, enumResolver));
   }
 
   const filteredTables = filterTables(metadata.tables, options);
 
   const tableInterfaces: InterfaceNode[] = [];
   for (const table of filteredTables) {
-    tableInterfaces.push(transformTable(table, metadata.enums, mapType, options, unknownTypes));
+    tableInterfaces.push(transformTable(table, metadata.enums, enumResolver, mapType, options, unknownTypes));
   }
   declarations.push(...tableInterfaces);
 

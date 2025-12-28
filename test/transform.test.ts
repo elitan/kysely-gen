@@ -1343,6 +1343,128 @@ describe('Transform', () => {
         expect(roleProp?.type).toEqual({ kind: 'reference', name: 'AuthRoleEnum' });
       }
     });
+
+    test('should handle enum name collisions by prefixing both with schema', () => {
+      const metadata: DatabaseMetadata = {
+        tables: [],
+        enums: [
+          {
+            schema: 'public',
+            name: 'audit_status',
+            values: ['pending', 'approved'],
+          },
+          {
+            schema: 'audit',
+            name: 'status',
+            values: ['active', 'inactive'],
+          },
+        ],
+      };
+
+      const { program } = transformDatabase(metadata);
+
+      const publicEnum = program.declarations.find(
+        (d) => d.kind === 'typeAlias' && d.name === 'PublicAuditStatus'
+      );
+      expect(publicEnum).toBeDefined();
+
+      const auditEnum = program.declarations.find(
+        (d) => d.kind === 'typeAlias' && d.name === 'AuditStatus'
+      );
+      expect(auditEnum).toBeDefined();
+    });
+
+    test('should reference collision-resolved enum names in column types', () => {
+      const metadata: DatabaseMetadata = {
+        tables: [
+          {
+            schema: 'public',
+            name: 'logs',
+            columns: [
+              {
+                name: 'id',
+                dataType: 'int4',
+                isNullable: false,
+                isAutoIncrement: true,
+                hasDefaultValue: true,
+              },
+              {
+                name: 'audit_status',
+                dataType: 'audit_status',
+                dataTypeSchema: 'public',
+                isNullable: false,
+                isAutoIncrement: false,
+                hasDefaultValue: false,
+              },
+              {
+                name: 'status',
+                dataType: 'status',
+                dataTypeSchema: 'audit',
+                isNullable: false,
+                isAutoIncrement: false,
+                hasDefaultValue: false,
+              },
+            ],
+          },
+        ],
+        enums: [
+          {
+            schema: 'public',
+            name: 'audit_status',
+            values: ['pending', 'approved'],
+          },
+          {
+            schema: 'audit',
+            name: 'status',
+            values: ['active', 'inactive'],
+          },
+        ],
+      };
+
+      const { program } = transformDatabase(metadata);
+
+      const logInterface = program.declarations.find(
+        (d) => d.kind === 'interface' && d.name === 'Log'
+      );
+      expect(logInterface).toBeDefined();
+      if (logInterface?.kind === 'interface') {
+        const auditStatusProp = logInterface.properties.find((p) => p.name === 'audit_status');
+        expect(auditStatusProp?.type).toEqual({ kind: 'reference', name: 'PublicAuditStatus' });
+
+        const statusProp = logInterface.properties.find((p) => p.name === 'status');
+        expect(statusProp?.type).toEqual({ kind: 'reference', name: 'AuditStatus' });
+      }
+    });
+
+    test('should not prefix when no collision exists', () => {
+      const metadata: DatabaseMetadata = {
+        tables: [],
+        enums: [
+          {
+            schema: 'public',
+            name: 'status',
+            values: ['active', 'inactive'],
+          },
+          {
+            schema: 'audit',
+            name: 'level',
+            values: ['info', 'warn', 'error'],
+          },
+        ],
+      };
+
+      const { program } = transformDatabase(metadata);
+
+      const publicEnum = program.declarations.find(
+        (d) => d.kind === 'typeAlias' && d.name === 'Status'
+      );
+      expect(publicEnum).toBeDefined();
+
+      const auditEnum = program.declarations.find(
+        (d) => d.kind === 'typeAlias' && d.name === 'AuditLevel'
+      );
+      expect(auditEnum).toBeDefined();
+    });
   });
 
   describe('unknown type warnings', () => {

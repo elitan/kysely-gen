@@ -3,17 +3,18 @@ import type { ColumnMetadata, EnumMetadata, TableMetadata } from '@/introspect/t
 import { toCamelCase } from '@/utils/case-converter';
 import type { TransformOptions, TypeMapper } from '@/transform/types';
 import { toPascalCase, singularize } from '@/transform/utils';
-import { getEnumTypeName } from '@/transform/enum';
+import type { EnumNameResolver } from '@/transform/enum';
 
 export function transformTable(
   table: TableMetadata,
   enums: EnumMetadata[],
+  enumResolver: EnumNameResolver,
   mapType: TypeMapper,
   options?: TransformOptions,
   unknownTypes?: Set<string>
 ): InterfaceNode {
   const properties: PropertyNode[] = table.columns.map((column) =>
-    transformColumn(column, enums, mapType, options, unknownTypes)
+    transformColumn(column, enums, enumResolver, mapType, options, unknownTypes)
   );
 
   return {
@@ -27,6 +28,7 @@ export function transformTable(
 export function transformColumn(
   column: ColumnMetadata,
   enums: EnumMetadata[],
+  enumResolver: EnumNameResolver,
   mapType: TypeMapper,
   options?: TransformOptions,
   unknownTypes?: Set<string>
@@ -37,7 +39,7 @@ export function transformColumn(
 
   let type: TypeNode;
   if (matchingEnum) {
-    const enumTypeName = getEnumTypeName(matchingEnum);
+    const enumTypeName = enumResolver.getName(matchingEnum);
     type = { kind: 'reference', name: enumTypeName };
 
     if (column.isNullable) {
