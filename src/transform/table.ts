@@ -56,7 +56,7 @@ export function transformColumn(
     });
   }
 
-  if (column.isAutoIncrement) {
+  if (column.isAutoIncrement || column.hasDefaultValue) {
     type = {
       kind: 'generic',
       name: 'Generated',

@@ -981,7 +981,7 @@ describe('Transform', () => {
       expect(longInterface).toBeDefined();
     });
 
-    test('should handle table with columns that have defaults but are not auto-increment', () => {
+    test('should wrap columns with defaults in Generated<T>', () => {
       const metadata: DatabaseMetadata = {
         tables: [
           {
@@ -1002,6 +1002,20 @@ describe('Transform', () => {
                 isAutoIncrement: false,
                 hasDefaultValue: true,
               },
+              {
+                name: 'is_active',
+                dataType: 'bool',
+                isNullable: false,
+                isAutoIncrement: false,
+                hasDefaultValue: true,
+              },
+              {
+                name: 'title',
+                dataType: 'varchar',
+                isNullable: false,
+                isAutoIncrement: false,
+                hasDefaultValue: false,
+              },
             ],
           },
         ],
@@ -1017,13 +1031,25 @@ describe('Transform', () => {
       expect(defaultInterface).toBeDefined();
       if (defaultInterface?.kind === 'interface') {
         const idProp = defaultInterface.properties.find((p) => p.name === 'id');
-        expect(idProp?.type.kind).not.toBe('generic');
+        expect(idProp?.type.kind).toBe('generic');
+        if (idProp?.type.kind === 'generic') {
+          expect(idProp.type.name).toBe('Generated');
+        }
 
         const createdProp = defaultInterface.properties.find((p) => p.name === 'created_at');
         expect(createdProp?.type.kind).toBe('generic');
         if (createdProp?.type.kind === 'generic') {
-          expect(createdProp.type.name).toBe('ColumnType');
+          expect(createdProp.type.name).toBe('Generated');
         }
+
+        const isActiveProp = defaultInterface.properties.find((p) => p.name === 'is_active');
+        expect(isActiveProp?.type.kind).toBe('generic');
+        if (isActiveProp?.type.kind === 'generic') {
+          expect(isActiveProp.type.name).toBe('Generated');
+        }
+
+        const titleProp = defaultInterface.properties.find((p) => p.name === 'title');
+        expect(titleProp?.type.kind).toBe('primitive');
       }
     });
   });
