@@ -40,8 +40,8 @@ export interface Comment {
   post_id: number;
   user_id: number;
   content: string;
-  status: StatusEnum;
-  created_at: ColumnType<Date, Date | string, Date | string>;
+  status: Generated<StatusEnum>;
+  created_at: Generated<ColumnType<Date, Date | string, Date | string>>;
 }
 
 export interface Measurement {
@@ -57,18 +57,18 @@ export interface Post {
   title: string;
   content: string | null;
   published_at: ColumnType<Date, Date | string, Date | string> | null;
-  view_count: number;
+  view_count: Generated<number>;
 }
 
 export interface User {
   id: Generated<number>;
   email: string;
   username: string;
-  created_at: ColumnType<Date, Date | string, Date | string>;
+  created_at: Generated<ColumnType<Date, Date | string, Date | string>>;
   updated_at: ColumnType<Date, Date | string, Date | string> | null;
-  is_active: boolean;
+  is_active: Generated<boolean>;
   metadata: JsonValue | null;
-  tags: string[] | null;
+  tags: Generated<string[] | null>;
   scores: number[] | null;
 }
 

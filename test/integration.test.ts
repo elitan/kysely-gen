@@ -50,7 +50,7 @@ describe('Integration: Full pipeline', () => {
 
     // Check non-nullable columns
     expect(output).toContain('email: string;');
-    expect(output).toContain('is_active: boolean;');
+    expect(output).toContain('is_active: Generated<boolean>');
 
     // Snapshot the entire output
     expect(output).toMatchSnapshot();
